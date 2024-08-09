@@ -4,44 +4,42 @@ $username = "root";
 $password = "";
 $dbname = "kyototech";
 
-// MySQLに接続
+
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// 接続をチェック
+
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// 投稿を削除する処理
+// 投稿の削除
 if (isset($_GET['delete_id'])) {
     $delete_id = $conn->real_escape_string($_GET['delete_id']);
     $sql = "DELETE FROM messages WHERE id = $delete_id";
     if ($conn->query($sql) === TRUE) {
-        header("Location: index.php"); // 削除後にリロードしてリストを更新
+        header("Location: index.php"); 
     } else {
         echo "Error deleting record: " . $conn->error;
     }
 }
 
-// POSTリクエストかチェックして投稿を処理
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // SQLインジェクション対策のためにエスケープ
+    // SQLインジェクション対策
     $content = $conn->real_escape_string($_POST['content']);
 
-    // XSS対策のためにHTMLエンティティをエスケープ
+    // XSS対策
     $content = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
 
     // データベースに挿入
     $sql = "INSERT INTO messages (content) VALUES ('$content')";
 
     if ($conn->query($sql) === TRUE) {
-        header("Location: index.php"); // ページをリロードしてフォームの再送信を防ぐ
+        header("Location: index.php"); 
     } else {
         echo "Error: " . $sql . "<br>" . $conn->error;
     }
 }
 
-// 投稿を取得
 $result = $conn->query("SELECT * FROM messages ORDER BY created_at DESC");
 
 $conn->close();
