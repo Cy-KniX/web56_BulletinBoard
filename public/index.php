@@ -4,9 +4,8 @@ $username = "root";
 $password = "";
 $dbname = "kyototech";
 
-
+// MySQLに接続
 $conn = new mysqli($servername, $username, $password, $dbname);
-
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
@@ -14,32 +13,31 @@ if ($conn->connect_error) {
 
 // 投稿の削除
 if (isset($_GET['delete_id'])) {
-    $delete_id = $conn->real_escape_string($_GET['delete_id']);
-    $sql = "DELETE FROM messages WHERE id = $delete_id";
-    if ($conn->query($sql) === TRUE) {
+    $stmt = $conn->prepare("DELETE FROM messages WHERE id = ?");
+    $stmt->bind_param("i", $_GET['delete_id']);
+    if ($stmt->execute()) {
         header("Location: index.php"); 
     } else {
-        echo "Error deleting record: " . $conn->error;
+        echo "Error deleting record: " . $stmt->error;
     }
+    $stmt->close();
 }
 
+// 投稿の追加
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // SQLインジェクション対策
-    $content = $conn->real_escape_string($_POST['content']);
-
-    // XSS対策
-    $content = htmlspecialchars($content, ENT_QUOTES, 'UTF-8');
-
-    // データベースに挿入
-    $sql = "INSERT INTO messages (content) VALUES ('$content')";
-
-    if ($conn->query($sql) === TRUE) {
+    $stmt = $conn->prepare("INSERT INTO messages (content) VALUES (?)");
+    $stmt->bind_param("s", $_POST['content']);
+    
+    if ($stmt->execute()) {
         header("Location: index.php"); 
     } else {
-        echo "Error: " . $sql . "<br>" . $conn->error;
+        echo "Error: " . $stmt->error;
     }
+    $stmt->close();
 }
 
+// 投稿一覧の取得
 $result = $conn->query("SELECT * FROM messages ORDER BY created_at DESC");
 
 $conn->close();
@@ -72,7 +70,7 @@ $conn->close();
             <?php while($row = $result->fetch_assoc()): ?>
                 <div class="card mb-3">
                     <div class="card-body">
-                        <p class="card-text"><?php echo $row['content']; ?></p>
+                        <p class="card-text"><?php echo htmlspecialchars($row['content'], ENT_QUOTES, 'UTF-8'); ?></p>
                         <small class="text-muted"><?php echo $row['created_at']; ?></small>
                         <a href="?delete_id=<?php echo $row['id']; ?>" class="btn btn-danger btn-sm float-right">削除</a>
                     </div>
