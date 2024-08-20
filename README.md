@@ -7,7 +7,7 @@ nginx、docker-compose.yml、dockerfile、public/index.php
 
 コンテナの起動
 ```
-Docker compose up 
+docker compose up 
 ```
 mysqlの実行
 ```
